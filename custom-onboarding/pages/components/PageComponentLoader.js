@@ -163,6 +163,21 @@ const PageComponentLoader = ({
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const res = await fetch('/api/check-login', {
+        method: 'POST',
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        console.error('Failed to log out');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="mt-12 mb-8"></div>
@@ -198,7 +213,7 @@ const PageComponentLoader = ({
       {errorMessage && (
         <p className="text-red-500 text-center">{errorMessage}</p>
       )}
-      <div className="flex justify-between mt-8">
+      <div className="flex justify-between mt-8 items-center">
         {currentPage === 2 && (
           <button
             onClick={handleNextPage}
@@ -215,6 +230,12 @@ const PageComponentLoader = ({
             Previous
           </button>
         )}
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-3 py-1 rounded mx-auto text-sm"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

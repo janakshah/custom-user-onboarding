@@ -8,10 +8,12 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [totalSteps] = useState(3);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
       try {
+        setLoading(true);
         const res = await fetch('/api/check-login');
         const { loggedIn, userId } = await res.json();
 
@@ -34,11 +36,21 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Error checking login status:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     checkLogin();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="spinner border-4 border-t-4 border-blue-500 h-12 w-12 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <Login />;

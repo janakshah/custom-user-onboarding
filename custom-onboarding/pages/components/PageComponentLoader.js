@@ -11,7 +11,7 @@ const componentMapping = {
 
 const PageComponentLoader = ({
   pageNumber,
-  userDetails,
+  userDetails = {},
   onNextPage,
   onPreviousPage,
 }) => {
@@ -35,10 +35,11 @@ const PageComponentLoader = ({
         const { data } = await response.json();
         const pageComponents = [];
 
-        if (data.birthdate_page === currentPage)
+        if (data?.birthdate_page === currentPage)
           pageComponents.push('birthday');
-        if (data.address_page === currentPage) pageComponents.push('address');
-        if (data.about_me_page === currentPage) pageComponents.push('about_me');
+        if (data?.address_page === currentPage) pageComponents.push('address');
+        if (data?.about_me_page === currentPage)
+          pageComponents.push('about_me');
 
         setComponents(pageComponents);
       } catch (error) {

@@ -196,7 +196,7 @@ const PageComponentLoader = ({
           {errorMessage}
         </p>
       )}
-      <div className="flex justify-between mt-8 items-center px-4">
+      <div className="flex justify-center mt-8 items-center px-4">
         {currentPage === 3 && (
           <button
             onClick={handlePreviousPage}

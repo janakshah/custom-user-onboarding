@@ -14,9 +14,9 @@ const PageComponentLoader = ({
   userDetails = {},
   onNextPage,
   onPreviousPage,
+  onSubmit,
 }) => {
   const [components, setComponents] = useState([]);
-  const [currentPage, setCurrentPage] = useState(pageNumber);
   const [errorMessage, setErrorMessage] = useState('');
   const [userDetailsState, setUserDetailsState] = useState({
     address: {
@@ -30,26 +30,22 @@ const PageComponentLoader = ({
   });
 
   useEffect(() => {
-    async function fetchPageComponents() {
+    const fetchPageComponents = async () => {
       try {
         const response = await fetch('/api/settings');
         const { data } = await response.json();
         const pageComponents = [];
-
-        if (data?.birthdate_page === currentPage)
+        if (data?.birthdate_page === pageNumber)
           pageComponents.push('birthday');
-        if (data?.address_page === currentPage) pageComponents.push('address');
-        if (data?.about_me_page === currentPage)
-          pageComponents.push('about_me');
-
+        if (data?.address_page === pageNumber) pageComponents.push('address');
+        if (data?.about_me_page === pageNumber) pageComponents.push('about_me');
         setComponents(pageComponents);
       } catch (error) {
         console.error('Error fetching page components:', error);
       }
-    }
-
+    };
     fetchPageComponents();
-  }, [currentPage]);
+  }, [pageNumber]);
 
   const validateFields = () => {
     for (const component of components) {
@@ -74,15 +70,6 @@ const PageComponentLoader = ({
     return true;
   };
 
-  const handleUserDetailChange = (field, value, type = 'basic') => {
-    setUserDetailsState((prev) => ({
-      ...prev,
-      [type === 'address' ? 'address' : field]:
-        type === 'address' ? { ...prev.address, [field]: value } : value,
-    }));
-    updateUserDetail(field, value);
-  };
-
   const updateUserDetail = async (column, value) => {
     try {
       const res = await fetch('/api/user-details', {
@@ -105,50 +92,24 @@ const PageComponentLoader = ({
     }
   };
 
-  const updatePageProgress = async (newPage) => {
-    try {
-      const res = await fetch('/api/page-progress', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userDetails.user_id,
-          current_page: newPage,
-        }),
-      });
-
-      if (!res.ok) {
-        console.error('Failed to update page progress');
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error updating page progress:', error);
-      return false;
-    }
+  const handleUserDetailChange = (field, value, type = 'basic') => {
+    setUserDetailsState((prev) => ({
+      ...prev,
+      [type === 'address' ? 'address' : field]:
+        type === 'address' ? { ...prev.address, [field]: value } : value,
+    }));
+    updateUserDetail(field, value);
   };
 
-  const handleNextPage = async () => {
-    if (!validateFields()) return;
-
-    const nextPage = currentPage + 1;
-    const success = await updatePageProgress(nextPage);
-
-    if (success) {
-      setCurrentPage(nextPage);
+  const handleNext = () => {
+    if (validateFields()) {
       onNextPage();
     }
   };
 
-  const handlePreviousPage = async () => {
-    const previousPage = currentPage - 1;
-    const success = await updatePageProgress(previousPage);
-
-    if (success) {
-      setCurrentPage(previousPage);
-      onPreviousPage();
+  const handleSubmitForm = () => {
+    if (validateFields()) {
+      onSubmit();
     }
   };
 
@@ -159,7 +120,6 @@ const PageComponentLoader = ({
         {components.map((componentName) => {
           const Component = componentMapping[componentName];
           if (!Component) return null;
-
           const componentProps =
             componentName === 'address'
               ? {
@@ -180,7 +140,6 @@ const PageComponentLoader = ({
                         handleUserDetailChange('about_me', value),
                     }
                   : null;
-
           return (
             <div
               key={componentName}
@@ -197,21 +156,32 @@ const PageComponentLoader = ({
         </p>
       )}
       <div className="flex justify-center mt-8 items-center px-4">
-        {currentPage === 3 && (
-          <button
-            onClick={handlePreviousPage}
-            className="bg-gray-500 text-white dark:bg-gray-700 dark:text-white px-4 py-2 rounded"
-          >
-            Previous
-          </button>
-        )}
-        {currentPage === 2 && (
-          <button
-            onClick={handleNextPage}
-            className="bg-blue-500 text-white dark:bg-blue-700 dark:text-white px-4 py-2 rounded"
-          >
-            Next
-          </button>
+        {pageNumber === 3 ? (
+          <>
+            <button
+              onClick={onPreviousPage}
+              className="bg-gray-500 text-white dark:bg-gray-700 dark:text-white px-4 py-2 rounded mr-4"
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleSubmitForm}
+              className="bg-green-500 text-white dark:bg-green-700 dark:text-white px-4 py-2 rounded"
+            >
+              Submit
+            </button>
+          </>
+        ) : (
+          <>
+            {pageNumber === 2 && (
+              <button
+                onClick={handleNext}
+                className="bg-blue-500 text-white dark:bg-blue-700 dark:text-white px-4 py-2 rounded"
+              >
+                Next
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -15,11 +15,9 @@ export default async function handler(req, res) {
 
     try {
       const { data, error } = await saveUserPageProgress(user_id, current_page);
-
       if (error) {
         return res.status(500).json({ error });
       }
-
       return res.status(200).json({ data });
     } catch (error) {
       return res.status(500).json({ error: error.message });
@@ -28,11 +26,9 @@ export default async function handler(req, res) {
     try {
       const { user_id } = req.query;
       const { data, error } = await fetchUserPageProgress(user_id);
-
       if (error) {
         return res.status(500).json({ error });
       }
-
       return res.status(200).json({ data });
     } catch (error) {
       return res.status(500).json({ error: error.message });

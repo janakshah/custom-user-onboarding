@@ -3,60 +3,87 @@ import Login from './components/Login';
 import PageComponentLoader from './components/PageComponentLoader';
 import ProgressBar from './components/ProgressBar';
 
+const fetchLoginStatus = async () => {
+  const res = await fetch('/api/check-login');
+  const { loggedIn, userId } = await res.json();
+  return { loggedIn, userId };
+};
+
+const fetchUserDetails = async (userId) => {
+  const res = await fetch(`/api/user-details?user_id=${userId}`);
+  const { data } = await res.json();
+  return data;
+};
+
+const fetchPageProgress = async (userId) => {
+  const res = await fetch(`/api/page-progress?user_id=${userId}`);
+  const { data } = await res.json();
+  return data;
+};
+
+const savePageProgress = async (userId, newPage) => {
+  const res = await fetch('/api/page-progress', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId, current_page: newPage }),
+  });
+  return res.ok;
+};
+
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentPage, setCurrentPage] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [userDetails, setUserDetails] = useState(null);
   const [totalSteps] = useState(3);
+  const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/check-login');
-        const { loggedIn, userId } = await res.json();
-
-        if (loggedIn) {
-          const pageRes = await fetch(`/api/page-progress?user_id=${userId}`);
-          const { data: pageData } = await pageRes.json();
-
-          const userDetailRes = await fetch(
-            `/api/user-details?user_id=${userId}`
-          );
-          const { data: userData } = await userDetailRes.json();
-
-          if (pageData && userData) {
-            setCurrentPage(pageData);
-            setUserDetails(userData);
-            setIsLoggedIn(true);
-          }
-        } else {
-          setIsLoggedIn(false);
-        }
-      } catch (error) {
-        console.error('Error checking login status:', error);
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      const { loggedIn, userId } = await fetchLoginStatus();
+      if (loggedIn) {
+        const pageData = await fetchPageProgress(userId);
+        const userData = await fetchUserDetails(userId);
+        setCurrentPage(pageData);
+        setUserDetails(userData);
+        setIsLoggedIn(true);
+        setProgress(pageData - 1);
+      } else {
+        setIsLoggedIn(false);
       }
+      setLoading(false);
     };
-
     checkLogin();
   }, []);
 
   const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/check-login', {
-        method: 'POST',
-      });
-      if (res.ok) {
-        window.location.reload();
-      } else {
-        console.error('Failed to log out');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
+    const res = await fetch('/api/check-login', { method: 'POST' });
+    if (res.ok) {
+      window.location.reload();
     }
+  };
+
+  const handleNextPage = async () => {
+    const newPage = currentPage + 1;
+    if (await savePageProgress(userDetails.user_id, newPage)) {
+      setCurrentPage(newPage);
+      setProgress(newPage === 3 ? 2 : newPage - 1);
+    }
+  };
+
+  const handlePreviousPage = async () => {
+    const newPage = currentPage - 1;
+    if (await savePageProgress(userDetails.user_id, newPage)) {
+      setCurrentPage(newPage);
+      setProgress(newPage - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setProgress(totalSteps);
   };
 
   if (loading) {
@@ -81,13 +108,18 @@ export default function Home() {
           Logout
         </button>
       </div>
-      <ProgressBar currentPage={currentPage} totalSteps={totalSteps} />
-      <PageComponentLoader
-        pageNumber={currentPage}
-        userDetails={userDetails}
-        onNextPage={() => setCurrentPage((prev) => prev + 1)}
-        onPreviousPage={() => setCurrentPage((prev) => prev - 1)}
-      />
+      <div className="mb-16">
+        <ProgressBar currentProgress={progress} totalSteps={totalSteps} />
+      </div>
+      <div className="px-4">
+        <PageComponentLoader
+          pageNumber={currentPage}
+          userDetails={userDetails}
+          onNextPage={handleNextPage}
+          onPreviousPage={handlePreviousPage}
+          onSubmit={handleSubmit}
+        />
+      </div>
     </div>
   );
 }

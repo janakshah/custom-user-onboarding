@@ -18,15 +18,16 @@ const PageComponentLoader = ({
   const [components, setComponents] = useState([]);
   const [currentPage, setCurrentPage] = useState(pageNumber);
   const [errorMessage, setErrorMessage] = useState('');
-
-  const [address, setAddress] = useState({
-    street_address: userDetails.street_address || '',
-    city: userDetails.city || '',
-    state: userDetails.state || '',
-    zip_code: userDetails.zip_code || '',
+  const [userDetailsState, setUserDetailsState] = useState({
+    address: {
+      street_address: userDetails.street_address || '',
+      city: userDetails.city || '',
+      state: userDetails.state || '',
+      zip_code: userDetails.zip_code || '',
+    },
+    birthday: userDetails.birthday || '',
+    about_me: userDetails.about_me || '',
   });
-  const [birthday, setBirthday] = useState(userDetails.birthday || '');
-  const [aboutMe, setAboutMe] = useState(userDetails.about_me || '');
 
   useEffect(() => {
     async function fetchPageComponents() {
@@ -53,27 +54,33 @@ const PageComponentLoader = ({
   const validateFields = () => {
     for (const component of components) {
       if (component === 'address') {
-        if (
-          !address.street_address ||
-          !address.city ||
-          !address.state ||
-          !address.zip_code
-        ) {
+        const { street_address, city, state, zip_code } =
+          userDetailsState.address;
+        if (!street_address || !city || !state || !zip_code) {
           setErrorMessage('Please fill out all address fields.');
           return false;
         }
       }
-      if (component === 'birthday' && !birthday) {
+      if (component === 'birthday' && !userDetailsState.birthday) {
         setErrorMessage('Please enter your birthdate.');
         return false;
       }
-      if (component === 'about_me' && !aboutMe) {
+      if (component === 'about_me' && !userDetailsState.about_me) {
         setErrorMessage('Please tell us about yourself.');
         return false;
       }
     }
     setErrorMessage('');
     return true;
+  };
+
+  const handleUserDetailChange = (field, value, type = 'basic') => {
+    setUserDetailsState((prev) => ({
+      ...prev,
+      [type === 'address' ? 'address' : field]:
+        type === 'address' ? { ...prev.address, [field]: value } : value,
+    }));
+    updateUserDetail(field, value);
   };
 
   const updateUserDetail = async (column, value) => {
@@ -96,24 +103,6 @@ const PageComponentLoader = ({
     } catch (error) {
       console.error('Error updating user detail:', error);
     }
-  };
-
-  const handleAddressChange = (value, field) => {
-    setAddress((prev) => {
-      const updated = { ...prev, [field]: value };
-      updateUserDetail(field, value);
-      return updated;
-    });
-  };
-
-  const handleBirthdayChange = (value) => {
-    setBirthday(value);
-    updateUserDetail('birthday', value);
-  };
-
-  const handleAboutMeChange = (value) => {
-    setAboutMe(value);
-    updateUserDetail('about_me', value);
   };
 
   const updatePageProgress = async (newPage) => {
@@ -163,43 +152,32 @@ const PageComponentLoader = ({
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/check-login', {
-        method: 'POST',
-      });
-      if (res.ok) {
-        window.location.reload();
-      } else {
-        console.error('Failed to log out');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4">
       <div className="mt-12 mb-8"></div>
       <div className="mb-8">
         {components.map((componentName) => {
           const Component = componentMapping[componentName];
           if (!Component) return null;
+
           const componentProps =
             componentName === 'address'
               ? {
-                  address,
-                  onChange: (field, value) => handleAddressChange(value, field),
+                  address: userDetailsState.address,
+                  onChange: (field, value) =>
+                    handleUserDetailChange(field, value, 'address'),
                 }
               : componentName === 'birthday'
                 ? {
-                    value: birthday,
-                    onChange: handleBirthdayChange,
+                    value: userDetailsState.birthday,
+                    onChange: (value) =>
+                      handleUserDetailChange('birthday', value),
                   }
                 : componentName === 'about_me'
                   ? {
-                      value: aboutMe,
-                      onChange: handleAboutMeChange,
+                      value: userDetailsState.about_me,
+                      onChange: (value) =>
+                        handleUserDetailChange('about_me', value),
                     }
                   : null;
 
@@ -218,29 +196,23 @@ const PageComponentLoader = ({
           {errorMessage}
         </p>
       )}
-      <div className="flex justify-between mt-8 items-center">
-        {currentPage === 2 && (
-          <button
-            onClick={handleNextPage}
-            className="bg-blue-500 text-white dark:bg-blue-700 dark:text-white px-4 py-2 rounded mx-auto"
-          >
-            Next
-          </button>
-        )}
+      <div className="flex justify-between mt-8 items-center px-4">
         {currentPage === 3 && (
           <button
             onClick={handlePreviousPage}
-            className="bg-gray-500 text-white dark:bg-gray-700 dark:text-white px-4 py-2 rounded mx-auto"
+            className="bg-gray-500 text-white dark:bg-gray-700 dark:text-white px-4 py-2 rounded"
           >
             Previous
           </button>
         )}
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white dark:bg-red-700 dark:text-white px-3 py-1 rounded mx-auto text-sm"
-        >
-          Logout
-        </button>
+        {currentPage === 2 && (
+          <button
+            onClick={handleNextPage}
+            className="bg-blue-500 text-white dark:bg-blue-700 dark:text-white px-4 py-2 rounded"
+          >
+            Next
+          </button>
+        )}
       </div>
     </div>
   );

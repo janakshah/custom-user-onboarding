@@ -44,9 +44,24 @@ export default function Home() {
     checkLogin();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const res = await fetch('/api/check-login', {
+        method: 'POST',
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        console.error('Failed to log out');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <div className="flex justify-center items-center min-h-screen">
         <div className="spinner border-4 border-t-4 border-blue-500 h-12 w-12 rounded-full animate-spin"></div>
       </div>
     );
@@ -58,6 +73,14 @@ export default function Home() {
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+      <div className="flex justify-end p-4">
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+        >
+          Logout
+        </button>
+      </div>
       <ProgressBar currentPage={currentPage} totalSteps={totalSteps} />
       <PageComponentLoader
         pageNumber={currentPage}

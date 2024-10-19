@@ -46,7 +46,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <div className="spinner border-4 border-t-4 border-blue-500 h-12 w-12 rounded-full animate-spin"></div>
       </div>
     );
@@ -57,7 +57,7 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
       <ProgressBar currentPage={currentPage} totalSteps={totalSteps} />
       <PageComponentLoader
         pageNumber={currentPage}

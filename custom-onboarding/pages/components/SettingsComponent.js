@@ -63,9 +63,11 @@ export default function SettingsComponent() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-md max-w-lg mx-auto">
       <h2 className="text-2xl mb-4">Page Component Settings</h2>
-      {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-red-500 dark:text-red-400 mb-4">{errorMessage}</p>
+      )}
       <div className="space-y-4">
         {Object.keys(settings).map((key) => (
           <div key={key} className="flex items-center">
@@ -75,7 +77,7 @@ export default function SettingsComponent() {
             <select
               value={settings[key]}
               onChange={(e) => handleChange(key, parseInt(e.target.value, 10))}
-              className="border rounded px-2 py-1"
+              className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value={2}>2</option>
               <option value={3}>3</option>

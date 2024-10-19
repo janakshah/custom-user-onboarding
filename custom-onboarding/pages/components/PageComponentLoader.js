@@ -204,20 +204,25 @@ const PageComponentLoader = ({
                   : null;
 
           return (
-            <div key={componentName} className="mb-8 mx-auto max-w-md">
+            <div
+              key={componentName}
+              className="mb-8 mx-auto max-w-md bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-md shadow-sm p-6"
+            >
               <Component {...componentProps} />
             </div>
           );
         })}
       </div>
       {errorMessage && (
-        <p className="text-red-500 text-center">{errorMessage}</p>
+        <p className="text-red-500 dark:text-red-400 text-center">
+          {errorMessage}
+        </p>
       )}
       <div className="flex justify-between mt-8 items-center">
         {currentPage === 2 && (
           <button
             onClick={handleNextPage}
-            className="bg-blue-500 text-white px-4 py-2 rounded mx-auto"
+            className="bg-blue-500 text-white dark:bg-blue-700 dark:text-white px-4 py-2 rounded mx-auto"
           >
             Next
           </button>
@@ -225,14 +230,14 @@ const PageComponentLoader = ({
         {currentPage === 3 && (
           <button
             onClick={handlePreviousPage}
-            className="bg-gray-500 text-white px-4 py-2 rounded mx-auto"
+            className="bg-gray-500 text-white dark:bg-gray-700 dark:text-white px-4 py-2 rounded mx-auto"
           >
             Previous
           </button>
         )}
         <button
           onClick={handleLogout}
-          className="bg-red-500 text-white px-3 py-1 rounded mx-auto text-sm"
+          className="bg-red-500 text-white dark:bg-red-700 dark:text-white px-3 py-1 rounded mx-auto text-sm"
         >
           Logout
         </button>

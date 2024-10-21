@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { register } from '../../services/loginApiService';
 
 export default function Login() {
   const router = useRouter();
@@ -15,22 +16,17 @@ export default function Login() {
     setMessage('');
 
     try {
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const { message: successMessage, error: errorMessage } = await register(
+        username,
+        password
+      );
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage(data.message);
+      if (errorMessage) {
+        setError(errorMessage);
+      } else {
+        setMessage(successMessage);
         router.push('/');
         router.reload();
-      } else {
-        setError(data.error || 'Something went wrong');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

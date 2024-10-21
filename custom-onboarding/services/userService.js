@@ -11,7 +11,10 @@ export async function loginUser(username, password) {
     const { data: currUser, error: queryError } =
       await findUserByUsername(username);
 
-    if (queryError) {
+    if (
+      queryError &&
+      queryError !== 'JSON object requested, multiple (or no) rows returned'
+    ) {
       throw new Error(queryError.message);
     }
 

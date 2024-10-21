@@ -2,34 +2,15 @@ import { useEffect, useState } from 'react';
 import Login from './components/Login';
 import PageComponentLoader from './components/PageComponentLoader';
 import ProgressBar from './components/ProgressBar';
+import { logout, isLoggedIn } from '../services/loginApiService';
+import {
+  fetchUserPageProgress,
+  saveUserPageProgress,
+} from '../services/pageProgressService';
+import { fetchUserDetails } from '../services/userDetailService';
 
 const fetchLoginStatus = async () => {
-  const res = await fetch('/api/check-login');
-  const { loggedIn, userId } = await res.json();
-  return { loggedIn, userId };
-};
-
-const fetchUserDetails = async (userId) => {
-  const res = await fetch(`/api/user-details?user_id=${userId}`);
-  const { data } = await res.json();
-  return data;
-};
-
-const fetchPageProgress = async (userId) => {
-  const res = await fetch(`/api/page-progress?user_id=${userId}`);
-  const { data } = await res.json();
-  return data;
-};
-
-const savePageProgress = async (userId, newPage) => {
-  const res = await fetch('/api/page-progress', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ user_id: userId, current_page: newPage }),
-  });
-  return res.ok;
+  return await isLoggedIn();
 };
 
 export default function Home() {
@@ -45,12 +26,16 @@ export default function Home() {
       setLoading(true);
       const { loggedIn, userId } = await fetchLoginStatus();
       if (loggedIn) {
-        const pageData = await fetchPageProgress(userId);
-        const userData = await fetchUserDetails(userId);
-        setCurrentPage(pageData);
-        setUserDetails(userData);
-        setIsLoggedIn(true);
-        setProgress(pageData - 1);
+        const { data: pageData } = await fetchUserPageProgress(userId);
+        const { data: userData, error } = await fetchUserDetails(userId);
+        if (!error) {
+          setCurrentPage(pageData);
+          setUserDetails(userData);
+          setIsLoggedIn(true);
+          setProgress(pageData - 1);
+        } else {
+          console.error(error);
+        }
       } else {
         setIsLoggedIn(false);
       }
@@ -60,7 +45,7 @@ export default function Home() {
   }, []);
 
   const handleLogout = async () => {
-    const res = await fetch('/api/check-login', { method: 'POST' });
+    const res = await logout();
     if (res.ok) {
       window.location.reload();
     }
@@ -68,7 +53,8 @@ export default function Home() {
 
   const handleNextPage = async () => {
     const newPage = currentPage + 1;
-    if (await savePageProgress(userDetails.user_id, newPage)) {
+    const { error } = await saveUserPageProgress(userDetails.user_id, newPage);
+    if (!error) {
       setCurrentPage(newPage);
       setProgress(newPage === 3 ? 2 : newPage - 1);
     }
@@ -76,7 +62,8 @@ export default function Home() {
 
   const handlePreviousPage = async () => {
     const newPage = currentPage - 1;
-    if (await savePageProgress(userDetails.user_id, newPage)) {
+    const { error } = await saveUserPageProgress(userDetails.user_id, newPage);
+    if (!error) {
       setCurrentPage(newPage);
       setProgress(newPage - 1);
     }

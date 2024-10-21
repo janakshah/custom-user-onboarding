@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Birthdate from './BirthDate';
 import Address from './Address';
 import AboutMe from './AboutMe';
+import { fetchPageComponents } from '../../services/pageComponentService';
+import { saveUserDetail } from '../../services/userDetailService';
 
 const componentMapping = {
   address: Address,
@@ -30,10 +32,12 @@ const PageComponentLoader = ({
   });
 
   useEffect(() => {
-    const fetchPageComponents = async () => {
+    const getPageComponents = async () => {
       try {
-        const response = await fetch('/api/settings');
-        const { data } = await response.json();
+        const { data, error } = await fetchPageComponents();
+        if (error) {
+          throw new Error(error);
+        }
         const pageComponents = [];
         if (data?.birthdate_page === pageNumber)
           pageComponents.push('birthday');
@@ -44,7 +48,7 @@ const PageComponentLoader = ({
         console.error('Error fetching page components:', error);
       }
     };
-    fetchPageComponents();
+    getPageComponents();
   }, [pageNumber]);
 
   const validateFields = () => {
@@ -72,20 +76,14 @@ const PageComponentLoader = ({
 
   const updateUserDetail = async (column, value) => {
     try {
-      const res = await fetch('/api/user-details', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userDetails.user_id,
-          column,
-          value,
-        }),
-      });
+      const { error } = await saveUserDetail(
+        userDetails.user_id,
+        column,
+        value
+      );
 
-      if (!res.ok) {
-        console.error('Failed to update user detail');
+      if (error) {
+        console.error('Failed to update user detail:', error);
       }
     } catch (error) {
       console.error('Error updating user detail:', error);

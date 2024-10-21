@@ -1,34 +1,8 @@
 import { useEffect, useState } from 'react';
-
-const fetchSettings = async () => {
-  try {
-    const res = await fetch('/api/settings');
-    const { data, error } = await res.json();
-    if (error) throw new Error(error);
-    return data;
-  } catch (err) {
-    console.error('Failed to fetch settings:', err);
-    return null;
-  }
-};
-
-const updateSettings = async (newSettings) => {
-  try {
-    const res = await fetch('/api/settings', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newSettings),
-    });
-    const { error } = await res.json();
-    if (error) throw new Error(error);
-    return true;
-  } catch (err) {
-    console.error('Failed to update settings:', err);
-    return false;
-  }
-};
+import {
+  fetchPageComponents,
+  savePageComponentSettings,
+} from '../../services/pageComponentService';
 
 export default function SettingsComponent() {
   const [settings, setSettings] = useState({
@@ -37,39 +11,49 @@ export default function SettingsComponent() {
     birthdate_page: 2,
   });
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
+      setLoading(true);
       setErrorMessage('');
-      const data = await fetchSettings();
-      if (data) {
-        setSettings(data);
-      } else {
+      const { data, error } = await fetchPageComponents();
+      if (error) {
         setErrorMessage('Failed to load settings.');
+      } else {
+        const filteredData = {
+          about_me_page: data.about_me_page,
+          address_page: data.address_page,
+          birthdate_page: data.birthdate_page,
+        };
+        setSettings(filteredData);
       }
+      setLoading(false);
     };
     loadSettings();
   }, []);
 
   const handleChange = async (field, value) => {
+    setLoading(true);
     const updatedSettings = { ...settings, [field]: value };
-    setSettings(updatedSettings);
-    const success = await updateSettings(updatedSettings);
-    if (!success) {
+
+    const { error } = await savePageComponentSettings(updatedSettings);
+    if (error) {
       setErrorMessage('Failed to update settings. Please try again.');
     } else {
+      setSettings(updatedSettings);
       setErrorMessage('');
     }
+    setLoading(false);
   };
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-md max-w-lg mx-auto">
-      <h2 className="text-2xl mb-4">Page Component Settings</h2>
       {errorMessage && (
         <p className="text-red-500 dark:text-red-400 mb-4">{errorMessage}</p>
       )}
       <div className="space-y-4">
-        {Object.keys(settings).map((key) => (
+        {['about_me_page', 'address_page', 'birthdate_page'].map((key) => (
           <div key={key} className="flex items-center">
             <label className="mr-4 font-semibold">
               {key.replace(/_/g, ' ')}:
@@ -77,6 +61,7 @@ export default function SettingsComponent() {
             <select
               value={settings[key]}
               onChange={(e) => handleChange(key, parseInt(e.target.value, 10))}
+              disabled={loading}
               className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value={2}>2</option>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getUserDetailsList } from '../../services/dataService';
 
 const UserDetailsTable = () => {
   const [userData, setUserData] = useState([]);
@@ -6,15 +7,11 @@ const UserDetailsTable = () => {
 
   useEffect(() => {
     const fetchUserDetails = async () => {
-      try {
-        const response = await fetch('/api/data');
-        if (!response.ok) {
-          throw new Error('Failed to fetch user details');
-        }
-        const { data } = await response.json();
+      const { data, error } = await getUserDetailsList();
+      if (error) {
+        setError(error);
+      } else {
         setUserData(data);
-      } catch (err) {
-        setError(err.message);
       }
     };
 
